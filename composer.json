@@ -1,0 +1,29 @@
+{
+    "name": "xddesigners/silverstripe-passwordless-login",
+    "description": "Passwordless primary login for Silverstripe CMS using single-use one-time codes or login links delivered by e-mail. No passwords; delivery is pluggable (implement OtpDeliveryChannel to add e.g. SMS).",
+    "type": "silverstripe-vendormodule",
+    "license": "BSD-3-Clause",
+    "keywords": ["silverstripe", "authentication", "passwordless", "otp", "login", "security"],
+    "authors": [
+        {
+            "name": "XD designers",
+            "homepage": "https://www.xd.nl"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "silverstripe/framework": "^6"
+    },
+    "autoload": {
+        "psr-4": {
+            "XD\\PasswordlessLogin\\": "src/"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    }
+}

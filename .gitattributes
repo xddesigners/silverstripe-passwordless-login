@@ -1,0 +1,3 @@
+# Keep distributed packages lean: don't export dev-only files
+/.gitattributes export-ignore
+/.gitignore    export-ignore
