@@ -4,6 +4,7 @@ namespace XD\PasswordlessLogin\Authenticator;
 
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\RequestHandler;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injector;
@@ -79,6 +80,55 @@ class PasswordlessLoginHandler extends RequestHandler
     private function service(): OtpService
     {
         return OtpService::singleton();
+    }
+
+    // ------------------------------------------------------- external entry
+
+    /**
+     * Start the code step for an e-mail address from elsewhere, e.g. right after
+     * a registration form created the account. Requests a code exactly like the
+     * request form does (resolver, rate limits and session binding all apply),
+     * remembers where to go after login, and returns the URL of the code step to
+     * redirect the visitor to.
+     *
+     * @param string|null $backURL local URL to return to after login
+     * @param string|null $notice  optional message shown above the code field
+     */
+    public static function startCodeLogin(
+        HTTPRequest $request,
+        string $email,
+        ?string $backURL = null,
+        ?string $notice = null
+    ): string {
+        OtpService::singleton()->requestCode($email, $request);
+
+        $session = $request->getSession();
+        $session->set(self::S_EMAIL, $email);
+        if ($backURL && Director::is_site_url($backURL)) {
+            $session->set(self::S_BACKURL, $backURL);
+        }
+        if ($notice) {
+            $session->set(self::S_NOTICE, ['text' => $notice, 'type' => 'good']);
+        } else {
+            $session->clear(self::S_NOTICE);
+        }
+
+        return static::verifyLink();
+    }
+
+    /**
+     * URL of the code step: <login url>/<name of the passwordless authenticator>/verify.
+     */
+    public static function verifyLink(): string
+    {
+        $name = 'passwordless';
+        foreach (Security::singleton()->getAuthenticators() as $authName => $authenticator) {
+            if ($authenticator instanceof PasswordlessAuthenticator) {
+                $name = $authName;
+                break;
+            }
+        }
+        return Controller::join_links(Security::login_url(), $name, 'verify');
     }
 
     // ---------------------------------------------------------------- step 1

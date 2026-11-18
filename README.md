@@ -45,6 +45,25 @@ SilverStripe\Core\Injector\Injector:
     class: App\MyResolver
 ```
 
+### Starting the code step from your own form
+
+After a registration form has created the account, send the visitor straight to
+the code step instead of logging them in unverified. This confirms the e-mail
+address with the same rules as the login form (resolver, rate limits, session
+binding):
+
+```php
+use XD\PasswordlessLogin\Authenticator\PasswordlessLoginHandler;
+
+$url = PasswordlessLoginHandler::startCodeLogin(
+    $this->getRequest(),
+    $member->Email,
+    $backURL,                                   // optional local return URL
+    'Your account is ready. Enter the code we e-mailed you.' // optional notice
+);
+return $this->redirect($url);
+```
+
 ## Security
 
 Designed against the OWASP Authentication guidance:
