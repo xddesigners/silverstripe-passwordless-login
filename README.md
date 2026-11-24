@@ -17,7 +17,9 @@ The member enters their e-mail and picks a method (both configurable):
 - **Link** — a one-time login link is delivered; clicking it lands on a
   **confirm page** (a POST), which defeats e-mail link prefetchers/scanners that
   would otherwise trip an auto-login. The URL uses a selector/verifier token
-  (high entropy, never stored in plaintext).
+  (high entropy, never stored in plaintext). The landing page moves on by itself
+  instead of redirecting, so the link also works from webmail with Silverstripe's
+  default `SameSite=Strict` session cookie.
 
 Either way, if the e-mail resolves to an allowed member, the account is logged in.
 

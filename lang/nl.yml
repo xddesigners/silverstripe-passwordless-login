@@ -16,6 +16,7 @@ nl:
     Resend: 'Nieuwe code versturen'
     ResendSent: 'Als je adres bij ons bekend is, is er een nieuwe code verstuurd. Controleer je e-mail.'
     ConfirmSignIn: 'Bevestig inloggen'
+    LinkContinue: 'Doorgaan'
     LinkSent: 'Als je adres bij ons bekend is, is er een loginlink verstuurd. Controleer je e-mail.'
     BadCode: 'Die code is ongeldig of verlopen. Probeer het opnieuw.'
     LinkInvalid: 'Deze loginlink is ongeldig of verlopen.'

@@ -5,6 +5,7 @@ namespace XD\PasswordlessLogin\Authenticator;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\RequestHandler;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injector;
@@ -20,6 +21,7 @@ use SilverStripe\Forms\TextField;
 use SilverStripe\Core\Validation\ValidationResult;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Security;
+use SilverStripe\i18n\i18n;
 use XD\PasswordlessLogin\Model\LoginToken;
 use XD\PasswordlessLogin\Service\OtpService;
 use XD\PasswordlessLogin\Support\LoginMessage;
@@ -29,11 +31,12 @@ use XD\PasswordlessLogin\Support\LoginMessage;
  *
  *  login()   step 1: e-mail + method → sends a code or a link
  *  verify()  step 2 (code): enter the code → logged in
- *  link()    link landing (GET): validates the token, then redirects to…
+ *  link()    link landing (GET): validates the token, then sends the visitor on to…
  *  confirm() …a POST confirm page (defeats e-mail link prefetch) → logged in
  *
  * All rendering goes through Security's login page; transitions use redirects +
- * session messages so nothing reveals whether an address exists.
+ * session messages so nothing reveals whether an address exists. Only the link
+ * landing answers with a page of its own, see continueTo().
  */
 class PasswordlessLoginHandler extends RequestHandler
 {
@@ -351,15 +354,52 @@ class PasswordlessLoginHandler extends RequestHandler
                 _t(__CLASS__ . '.LinkInvalid', 'This login link is not valid or has expired.'),
                 ValidationResult::TYPE_ERROR
             );
-            return $this->redirect($this->Link());
+            return $this->continueTo($this->Link());
         }
 
         if ($back = $this->getBackURL()) {
             $request->getSession()->set(self::S_BACKURL, $back);
         }
-        // Store the reference and redirect to a clean URL (strips the token).
+        // Store the reference and go on to a clean URL (strips the token).
         $request->getSession()->set(self::S_LINK_ID, (int) $row->ID);
-        return $this->redirect($this->Link('confirm'));
+        return $this->continueTo($this->Link('confirm'));
+    }
+
+    /**
+     * Send the visitor on from the link landing with a page of our own instead of
+     * a redirect. A link clicked in webmail is a cross-site navigation: browsers
+     * hold back SameSite=Strict cookies (the Silverstripe 6 default) for that
+     * request and for every redirect it leads to, so the session started here
+     * would be missing on the next page. A navigation that our own page starts is
+     * same-site, and does get the cookie.
+     *
+     * The page is bare on purpose: its URL still holds the token, so it loads
+     * nothing and sends no referrer.
+     */
+    private function continueTo(string $link): HTTPResponse
+    {
+        $url = Convert::raw2att(Director::absoluteURL($link));
+        $lang = Convert::raw2att(str_replace('_', '-', i18n::get_locale()));
+        $label = Convert::raw2xml(_t(__CLASS__ . '.LinkContinue', 'Continue'));
+
+        $html = <<<HTML
+            <!DOCTYPE html>
+            <html lang="{$lang}">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <meta name="robots" content="noindex">
+                <meta name="referrer" content="no-referrer">
+                <meta http-equiv="refresh" content="0; url={$url}">
+                <title>{$label}</title>
+            </head>
+            <body><p><a href="{$url}">{$label}</a></p></body>
+            </html>
+            HTML;
+
+        return HTTPResponse::create($html)
+            ->addHeader('Content-Type', 'text/html; charset=utf-8')
+            ->addHeader('Referrer-Policy', 'no-referrer');
     }
 
     public function confirm()

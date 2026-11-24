@@ -16,6 +16,7 @@ en:
     Resend: 'Send a new code'
     ResendSent: 'If your address is known, a new code has been sent. Check your e-mail.'
     ConfirmSignIn: 'Confirm sign in'
+    LinkContinue: 'Continue'
     LinkSent: 'If your address is known, a login link has been sent. Check your e-mail.'
     BadCode: 'That code is not valid or has expired. Please try again.'
     LinkInvalid: 'This login link is not valid or has expired.'
